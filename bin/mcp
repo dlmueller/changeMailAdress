@@ -7,9 +7,15 @@ require 'idm'
 require 'thor'
 
 class Mcp < Thor
-  desc 'check [MAIL-ADDRESS]','check [MAIL-ADDRESS] check the availability of the mail address'
+  desc 'check [MAIL-ADDRESS]',
+       'check [MAIL-ADDRESS] check the availability of the mail address'
   def check(mail)
-    
+    idm = Idm.new
+    if idm.exist?(mail: mail)
+      puts "Existiert"
+    else
+      puts "Existiert nicht"
+    end
   end
 end
 
