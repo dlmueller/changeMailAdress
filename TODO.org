@@ -1,0 +1,9 @@
+#+title:  tasks of the mail change script development
+#+author: Michael Schaarschmidt
+#+email:  michael.schaarschmidt@itz.uni-halle.de
+
+* Check Mail-Address existance
+** TODO verify mail address syntax
+** TODO create lib/idm.rb
+** TODO call mail_pkg.exist on the given mail address argumentns
+
