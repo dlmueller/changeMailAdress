@@ -7,14 +7,46 @@ require 'idm'
 require 'thor'
 
 class Mcp < Thor
-  desc 'check [MAIL-ADDRESS]',
-       'check [MAIL-ADDRESS] check the availability of the mail address'
+  desc 'check [MAIL]',
+       'check [MAIL] check the availability of the mail address'
   def check(mail)
     idm = Idm.new
-    if idm.exist?(mail: mail)
+    if idm.mail_exist?(mail: mail)
       puts "Existiert"
     else
       puts "Existiert nicht"
+    end
+  end
+
+
+  method_option :uid,
+          desc: "UID of the account",
+      required: true
+  method_option :mail,
+          desc: "the new mail address",
+      required: true
+  desc 'change',
+       'set MAIL as the new mail address for the account of UID'
+  def change
+    puts "[debug] Aufruf-Parameter Mail: #{options[:mail]}"
+    puts "[debug] Aufruf-Parameter UID:  #{options[:uid]}"
+
+    idm = Idm.new
+
+    if idm.uid_not_exist?(uid: options[:uid])
+      abort "[error] Account existiert nicht!"
+    end
+
+    if idm.mail_exist?(mail: options[:mail])
+      abort "[error] Mail-Adresse existiert bereits"
+    end
+
+    idm.change(uid: options[:uid], mail: options[:mail])
+
+    if idm.verify?(uid: options[:uid], mail: options[:mail])
+      puts "[success] Adresse erfolgreich geändert"
+    else
+      puts "[error] Adressänderung wurde nicht durchgeführt"
     end
   end
 end
