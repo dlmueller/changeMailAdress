@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require 'ruby-plsql'
+require 'pry'
 
 class Idm
   def initialize
@@ -32,6 +33,12 @@ class Idm
     current_mail = plsql.mail_pkg.getMailAddress(uid)
 
     current_mail == mail ? true : false
+  end
+
+  def getChangeMailQueue
+    records = nil
+    plsql.mail_pkg.getChangeMailQueue { |c| records = c.fetch_all }
+    records
   end
 
 private
