@@ -3,6 +3,7 @@
 
 $:.unshift File.expand_path('../../lib',__FILE__)
 
+require 'awesome_print'
 require 'idm'
 require 'thor'
 
@@ -48,6 +49,15 @@ class Mcp < Thor
     else
       puts "[error] Adressänderung wurde nicht durchgeführt"
     end
+  end
+
+  desc 'list','list'
+  def list
+    idm = Idm.new
+
+    queue = idm.getChangeMailQueue
+
+    ap queue
   end
 end
 
