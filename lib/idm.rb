@@ -25,8 +25,8 @@ class Idm
     !uid_exist?(uid: uid)
   end
 
-  def change(uid:,mail:)
-    plsql.mail_pkg.updateMailAddress(uid, mail)
+  def change(id:,mail:)
+    plsql.mail_pkg.updateMailAddress(id, mail)
   end
 
   def verify?(uid:,mail:)
@@ -39,6 +39,10 @@ class Idm
     records = nil
     plsql.mail_pkg.getChangeMailQueue { |c| records = c.fetch_all }
     records
+  end
+
+  def set_change_signature(uid:,id:,mail:)
+    plsql.mail_pkg.set_change_signature(uid, id, mail)
   end
 
 private

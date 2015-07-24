@@ -21,34 +21,70 @@ class Mcp < Thor
   end
 
 
-  method_option :uid,
-          desc: "UID of the account",
+  method_option :id,
+          desc: "id of the case in the change mail queue",
       required: true
   method_option :mail,
           desc: "the new mail address",
       required: true
   desc 'change',
-       'set MAIL as the new mail address for the account of UID'
+       'set MAIL as the new mail address for the case with ID'
   def change
     puts "[debug] Aufruf-Parameter Mail: #{options[:mail]}"
-    puts "[debug] Aufruf-Parameter UID:  #{options[:uid]}"
+    #puts "[debug] Aufruf-Parameter UID:  #{options[:uid]}"
 
     idm = Idm.new
 
-    if idm.uid_not_exist?(uid: options[:uid])
-      abort "[error] Account existiert nicht!"
-    end
+    # if idm.uid_not_exist?(uid: options[:uid])
+    #   abort "[error] Account existiert nicht!"
+    # end
 
     if idm.mail_exist?(mail: options[:mail])
       abort "[error] Mail-Adresse existiert bereits"
     end
 
-    idm.change(uid: options[:uid], mail: options[:mail])
+    idm.change(id: options[:id].to_i, mail: options[:mail])
+    idm.set_change_signature(uid: ENV['USER'], id: options[:id].to_i, mail: options[:mail])
 
-    if idm.verify?(uid: options[:uid], mail: options[:mail])
-      puts "[success] Adresse erfolgreich geändert"
+    # if idm.verify?(uid: options[:uid], mail: options[:mail])
+    #   puts "[success] Adresse erfolgreich geändert"
+    # else
+    #   puts "[error] Adressänderung wurde nicht durchgeführt"
+    # end
+  end
+
+  method_option :id,
+          desc: 'id of the case to be shown',
+          type: :numeric,
+      required: true
+  desc 'show','show detailed infos to a case'
+  def show
+    idm = Idm.new
+
+    queue = idm.getChangeMailQueue
+
+    entry = queue.select{ |e| e[0] == options[:id] }.first
+
+    if !entry.nil?
+      puts ""
+      puts "ID                 #{entry[0]}"
+      puts "Firstname (Old)    #{entry[4]}"
+      puts "Lastname (Old)     #{entry[5]}"
+      puts ""
+      puts "Firstname (New)    #{entry[6]}"
+      puts "Lastname (New)     #{entry[7]}"
+      puts ""
+      puts "Mail (Old)         #{entry[2]}"
+      puts "Mail (New)         #{entry[3]}"
+      puts "Name geändert am   #{entry[10]}"
+      puts ""
+      puts "Bearbeitungsstatus offen" if entry[8] == 0
+      puts "Bearbeitungsstatus abgeschlossen" if entry[8] == 1
+      puts "Bearbeitet von     #{entry[9]}" if entry[8] == 1
+      puts "Bearbeitet am      #{entry[11]}" if entry[8] == 1
+      puts ""
     else
-      puts "[error] Adressänderung wurde nicht durchgeführt"
+      puts "Zu der angegebenen ID gibt es keinen Änderungseintrag!"
     end
   end
 
@@ -77,8 +113,8 @@ class Mcp < Thor
       records = queue.reduce([]) do |acc, queue_entry|
         acc << {
           id: queue_entry[0],
-          firstname: queue_entry[4],
-          lastname:  queue_entry[5],
+          firstname_new: queue_entry[6],
+          lastname_new:  queue_entry[7],
           mail:      queue_entry[2]
         }
       end
