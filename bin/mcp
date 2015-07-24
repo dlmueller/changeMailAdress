@@ -6,6 +6,7 @@ $:.unshift File.expand_path('../../lib',__FILE__)
 require 'awesome_print'
 require 'idm'
 require 'thor'
+require 'table_print'
 
 class Mcp < Thor
   desc 'check [MAIL]',
@@ -51,13 +52,39 @@ class Mcp < Thor
     end
   end
 
-  desc 'list','list'
+  method_option :verbose,
+          desc: "same functionality with more infos",
+          type: :boolean,
+      required: false
+  desc 'list','show all open cases'
   def list
     idm = Idm.new
 
     queue = idm.getChangeMailQueue
 
-    ap queue
+    if options[:verbose]
+      records = queue.reduce([]) do |acc, queue_entry|
+        acc << {
+          id: queue_entry[0],
+          firstname_old: queue_entry[4],
+          lastname_old:  queue_entry[5],
+          firstname_new: queue_entry[6],
+          lastname_new:  queue_entry[7],
+          mail:      queue_entry[2]
+        }
+      end
+    else
+      records = queue.reduce([]) do |acc, queue_entry|
+        acc << {
+          id: queue_entry[0],
+          firstname: queue_entry[4],
+          lastname:  queue_entry[5],
+          mail:      queue_entry[2]
+        }
+      end
+    end
+
+    tp records
   end
 end
 
