@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+require "awesome_print"
 require 'ruby-plsql'
 require 'pry'
 
@@ -35,14 +36,48 @@ class Idm
     current_mail == mail ? true : false
   end
 
-  def getChangeMailQueue
+  def get_change_mail_queue
     records = nil
     plsql.mail_pkg.getChangeMailQueue { |c| records = c.fetch_all }
     records
   end
 
+  def get_change_mail_queue_entry(id:)
+    record = []
+    plsql.mail_pkg.getChangeMailQueueEntry(id) { |c| record = c.fetch_all }
+
+    if record.count != 0
+      record.first
+    else
+      []
+    end
+  end
+
+  def set_change_admin(id:,uid:)
+    plsql.mail_pkg.setChangeSignatureAdmin(id, uid)
+  end
+
+  def set_new_mail(id:,mail:)
+    plsql.mail_pkg.setChangeSignatureMail(id,mail)
+  end
+
+  def set_change_mail_queue_task_close(id:)
+    plsql.mail_pkg.setChangeMailTaskClose(id)
+  end
+
+  def set_gw_change_task(id:)
+    entry = get_change_mail_queue_entry(id: id)
+    plsql.mail_pkg.setGwChangeTask(id, entry[1])
+  end
+
   def set_change_signature(uid:,id:,mail:)
-    plsql.mail_pkg.set_change_signature(uid, id, mail)
+    set_change_admin(id: id, uid: uid)
+    set_new_mail(id: id, mail: mail)
+    set_change_mail_queue_task_close(id: id)
+  end
+
+  def getUid(umt_login_id:)
+    plsql.account_pkg.getNKZ(umt_login_id)
   end
 
 private
