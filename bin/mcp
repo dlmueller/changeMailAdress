@@ -25,6 +25,34 @@ class Mcp < Thor
     end
   end
 
+  method_option :id,
+                desc: "id of the case in the change mail queue",
+                type: :numeric,
+                required: true
+  desc 'reopen',
+       'reopen a closed ticket'
+  def reopen
+
+    idm = Idm.new
+
+    if false == idm.change_mail_queue_ticket_exist?(id: options[:id])
+      abort "[error] Es existiert kein Ticket mit der Ticket-ID #{options[:id]}"
+    end
+
+    if 1 != idm.change_mail_queue_ticket_status(id: options[:id])
+      abort "[error] Das Ticket mit der Ticket-ID #{options[:id]} ist nicht geschlossen!"
+    end
+
+    idm.reopen_change_mail_queue_ticket(id: options[:id])
+
+    if 0 != idm.change_mail_queue_ticket_status(id: options[:id])
+      abort "[error] Das Ticket konnte nicht erneut geöffnet werden!"
+    end
+
+    puts "Das Ticket wurde erfolgreich wieder geöffnet!"
+
+  end
+
 
   method_option :id,
           desc: "id of the case in the change mail queue",

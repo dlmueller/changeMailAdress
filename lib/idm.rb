@@ -88,6 +88,18 @@ class Idm
     plsql.account_pkg.getAccountState(uid_number)
   end
 
+  def change_mail_queue_ticket_exist?(id:)
+    plsql.mail_pkg.changeMailQueueTicketExist(id)
+  end
+
+  def change_mail_queue_ticket_status(id:)
+    plsql.mail_pkg.changeMailQueueTicketStatus(id)
+  end
+
+  def reopen_change_mail_queue_ticket(id:)
+    plsql.mail_pkg.reopenChangeMailQueueTicket(id)
+  end
+
 private
   def connect
     plsql.connection = OCI8.new \
