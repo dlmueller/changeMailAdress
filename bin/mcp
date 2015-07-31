@@ -87,6 +87,8 @@ class Mcp < Thor
       puts ""
       puts "ID                 #{entry[0]}"
       puts "Nutzerkennzeichen: #{entry[2]}"
+      puts "Account-Typ:       #{idm.get_account_type(uid_number: entry[1])}"
+      puts "Account-Status:    #{idm.get_account_state(uid_number: entry[1])}"
       puts ""
       puts "Firstname (Old)    #{entry[5]}"
       puts "Lastname (Old)     #{entry[6]}"
@@ -152,7 +154,9 @@ class Mcp < Thor
           lastname_new:  queue_entry[8],
           mail:      queue_entry[3],
           closed_by: queue_entry[10],
-          status: queue_entry[9] == 1 ? close : open
+          status: queue_entry[9] == 1 ? close : open,
+          type: idm.get_account_type(uid_number: queue_entry[1]),
+          state: idm.get_account_state(uid_number: queue_entry[1])
         }
       end
     else
@@ -163,7 +167,9 @@ class Mcp < Thor
           firstname_new: queue_entry[7],
           lastname_new:  queue_entry[8],
           mail: queue_entry[3],
-          status: queue_entry[9] == 1 ? close : open
+          status: queue_entry[9] == 1 ? close : open,
+          type: idm.get_account_type(uid_number: queue_entry[1]),
+          state: idm.get_account_state(uid_number: queue_entry[1])
         }
       end
     end

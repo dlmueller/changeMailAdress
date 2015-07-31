@@ -80,6 +80,14 @@ class Idm
     plsql.account_pkg.getNKZ(umt_login_id)
   end
 
+  def get_account_type(uid_number:)
+    plsql.account_pkg.getAccountType(uid_number)
+  end
+
+  def get_account_state(uid_number:)
+    plsql.account_pkg.getAccountState(uid_number)
+  end
+
 private
   def connect
     plsql.connection = OCI8.new \
