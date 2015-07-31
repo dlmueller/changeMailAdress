@@ -25,6 +25,29 @@ class Mcp < Thor
     end
   end
 
+  method_option :id,
+                desc: "id of the case in the change mail queue",
+                type: :numeric,
+                required: true
+  desc 'reopen', 'reopen a closed ticket'
+  def reopen
+    idm = Idm.new
+
+    if false == idm.change_mail_queue_ticket_exist?(id: options[:id])
+      abort error(message: "Es existiert kein Ticket mit der Ticket-ID: #{options[:id]}")
+    end
+
+    if 1 != idm.change_mail_queue_ticket_status(id: options[:id])
+      abort error(message: "Das Ticket mit der Ticket-ID #{options[:id]} ist nicht " +
+                  "geschlossen und kann deshalb nicht geöffnet werden!")
+    end
+
+    idm.reopen_change_mail_queue_ticket(id: options[:id])
+
+    if 0 == idm.change_mail_queue_ticket_status(id: options[:id])
+      puts success(message:"Das Ticket #{options[:id]} wurde erfolgreich wieder geöffnet!")
+    end
+  end
 
   method_option :id,
           desc: "id of the case in the change mail queue",
@@ -36,19 +59,16 @@ class Mcp < Thor
   desc 'change',
        'set MAIL as the new mail address for the case with ID'
   def change
-    puts "[debug] Aufruf-Parameter Mail: #{options[:mail]}"
-    #puts "[debug] Aufruf-Parameter UID:  #{options[:uid]}"
-
     idm = Idm.new
 
     change_mail_queue_entry = idm.get_change_mail_queue_entry(id: options[:id].to_i)
 
     if change_mail_queue_entry.count == 0
-      abort "[error] Es gibt keinen Änderungskandidaten mit der angegebenen ID"
+      abort error(message: "Es gibt keinen Änderungskandidaten mit der angegebenen ID")
     end
 
     if idm.mail_exist?(mail: options[:mail])
-      abort "[error] Mail-Adresse existiert bereits"
+      abort error(message: "Mail-Adresse existiert bereits")
     end
 
     idm.change(id: options[:id].to_i, mail: options[:mail])
@@ -105,7 +125,7 @@ class Mcp < Thor
       puts "Bearbeitet am      #{entry[12]}" if entry[9] == 1
       puts ""
     else
-      puts "Zu der angegebenen ID gibt es keinen Änderungseintrag!"
+      puts error(message: "Zu der angegebenen ID gibt es keinen Änderungseintrag!")
     end
   end
 
@@ -124,7 +144,7 @@ class Mcp < Thor
   desc 'list [--open|--closed]','show all open cases'
   def list
     if true == options[:closed] && true == options[:open]
-      abort "[error] please chose either --open or --closed, but not both"
+      abort notice(message: "please choose either --open or --closed, but not both")
     end
 
     idm = Idm.new
@@ -169,6 +189,19 @@ class Mcp < Thor
     end
 
     tp records
+  end
+
+private
+  def success(message:)
+    "[" + "success".colorize(:green) + "] #{message}"
+  end
+
+  def error(message:)
+    "[" + "error".colorize(:red) + "]     #{message}"
+  end
+
+  def notice(message:)
+    "[info] #{message}"
   end
 end
 
