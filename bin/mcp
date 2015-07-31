@@ -11,11 +11,14 @@ require 'thor'
 require 'table_print'
 
 class Mcp < Thor
-  desc 'check [MAIL]',
-       'check [MAIL] check the availability of the mail address'
-  def check(mail)
+  method_option :mail,
+          desc: "the new mail address",
+      required: true
+  desc 'check',
+       'check check the availability of the mail address'
+  def check
     idm = Idm.new
-    if idm.mail_exist?(mail: mail)
+    if idm.mail_exist?(mail: options[:mail])
       puts "Existiert"
     else
       puts "Existiert nicht"
