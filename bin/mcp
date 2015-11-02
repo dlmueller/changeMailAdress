@@ -111,22 +111,63 @@ class Mcp < Thor
     entry = queue.select{ |e| e[0] == options[:id] }.first
     groupwise_mail = groupwise.get_mail(uid: entry[2])
 
+    changeid = entry[0]
+    userid = entry[1]
+    nkz = entry[2]
+
+    old_mail = entry[3]
+    old_firstname = entry[5]
+    old_lastname = entry[6]
+
+    new_mail = entry[4]
+    new_firstname = entry[7]
+    new_lastname = entry[8]
+
+    mailold_firstname = old_mail.split(".").first
+    mailold_domainname = old_mail.split("@").last
+
+    # entweder 
+    mailprop_firstname = new_firstname.downcase.split(" ").first
+    
+    # oder
+    mailprop_firstname = mailold_firstname
+    mailprop_lastname = new_lastname.downcase
+
+    proposed_mail = "#{mailprop_firstname}.#{mailprop_lastname}@#{mailold_domainname}"
+
+    proposed_mail.gsub! 'ä', 'ae'
+    proposed_mail.gsub! 'ö', 'oe'
+    proposed_mail.gsub! 'ü', 'ue'
+    proposed_mail.gsub! 'ß', 'ss'
+    proposed_mail.gsub! 'é', 'e'
+    # to be continued ...
+
+    proposed_action = "UNKNOWN"
+    if proposed_mail == groupwise_mail 
+        proposed_action = "CLOSE"
+    else
+        proposed_action = "CHANGE"
+    end
+
     if !entry.nil?
       puts ""
-      puts "ID                 #{entry[0]}"
-      puts "Nutzerkennzeichen: #{entry[2]}"
-      puts "Account-Typ:       #{idm.get_account_type(uid_number: entry[1])}"
-      puts "Account-Status:    #{idm.get_account_state(uid_number: entry[1])}"
+      puts "ID                 #{changeid}"
+      puts "Nutzerkennzeichen: #{nkz}"
+      puts "Account-Typ:       #{idm.get_account_type(uid_number: userid)}"
+      puts "Account-Status:    #{idm.get_account_state(uid_number: userid)}"
       puts ""
-      puts "Firstname (Old)    #{entry[5]}"
-      puts "Lastname (Old)     #{entry[6]}"
+      puts "Firstname (Old)    #{old_firstname}"
+      puts "Lastname (Old)     #{old_lastname}"
       puts ""
-      puts "Firstname (New)    #{entry[7]}"
-      puts "Lastname (New)     #{entry[8]}"
+      puts "Firstname (New)    #{new_firstname}"
+      puts "Lastname (New)     #{new_lastname}"
       puts ""
-      puts "Mail (Old)         #{entry[3]}"
-      puts "Mail (New)         #{entry[4]}"
+      puts "Mail (Old)         #{old_mail}"
+      puts "Mail (New)         #{new_mail}"
       puts "Mail (gwldap)      #{groupwise_mail}"
+      puts "Mail (proposed)    #{proposed_mail}"
+      puts ""
+      puts "proposed action:   #{proposed_action}"
       puts ""
       puts "Name geändert am   #{entry[11]}"
       puts "Bearbeitungsstatus " + "offen".colorize(:red) if entry[9] == 0
