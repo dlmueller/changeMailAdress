@@ -3,6 +3,9 @@
 
 $:.unshift File.expand_path('../../lib',__FILE__)
 
+require 'dotenv'
+Dotenv.load
+
 require 'awesome_print'
 require 'colorize'
 require 'idm'
