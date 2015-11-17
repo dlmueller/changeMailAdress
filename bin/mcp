@@ -8,10 +8,13 @@ Dotenv.load
 
 require 'awesome_print'
 require 'colorize'
-require 'idm'
-require 'groupwise'
 require 'thor'
 require 'table_print'
+
+# own libraries
+require 'conventions'
+require 'idm'
+require 'groupwise'
 
 class Mcp < Thor
   method_option :mail,
@@ -99,7 +102,7 @@ class Mcp < Thor
     idm.set_change_mail_queue_task_close(id: options[:id].to_i)
     idm.set_gw_change_task(id: options[:id].to_i)
   end
-
+  
   method_option :id,
           desc: 'id of the case to be shown',
           type: :numeric,
@@ -108,6 +111,7 @@ class Mcp < Thor
   def show
     idm = Idm.new
     groupwise = Groupwise.new
+    conv = Conventions.new
 
     queue = idm.get_change_mail_queue
 
@@ -129,29 +133,9 @@ class Mcp < Thor
     mailold_firstname = old_mail.split(".").first
     mailold_domainname = old_mail.split("@").last
 
-    # entweder 
-    mailprop_firstname = new_firstname.downcase.split(" ").first
-    
-    # oder
-    mailprop_firstname = mailold_firstname
-    mailprop_lastname = new_lastname.downcase
-
-    proposed_mail = "#{mailprop_firstname}.#{mailprop_lastname}@#{mailold_domainname}"
-
-    proposed_mail.gsub! 'ä', 'ae'
-    proposed_mail.gsub! 'ö', 'oe'
-    proposed_mail.gsub! 'ü', 'ue'
-    proposed_mail.gsub! 'ß', 'ss'
-    proposed_mail.gsub! 'é', 'e'
-    # to be continued ...
-
-    proposed_action = "UNKNOWN"
-    if proposed_mail == groupwise_mail 
-        proposed_action = "CLOSE"
-    else
-        proposed_action = "CHANGE"
-    end
-
+    proposed_mail = conv.get_proposed_mailaddress(entry)
+    proposed_action = conv.get_proposed_action(entry, groupwise, idm)
+   
     if !entry.nil?
       puts ""
       puts "ID                 #{changeid}"
@@ -170,7 +154,12 @@ class Mcp < Thor
       puts "Mail (gwldap)      #{groupwise_mail}"
       puts "Mail (proposed)    #{proposed_mail}"
       puts ""
-      puts "proposed action:   #{proposed_action}"
+      if proposed_action == 'CLOSE' 
+        theColor = :green
+      else 
+        theColor = :red
+      end
+      puts "proposed action:   " + "#{proposed_action}".colorize(theColor)
       puts ""
       puts "Name geändert am   #{entry[11]}"
       puts "Bearbeitungsstatus " + "offen".colorize(:red) if entry[9] == 0
@@ -202,7 +191,9 @@ class Mcp < Thor
     end
 
     idm = Idm.new
-
+    groupwise = Groupwise.new
+    conv = Conventions.new
+    
     queue = idm.get_change_mail_queue
     open = "open".colorize(:red)
     close = "close".colorize(:green)
@@ -225,6 +216,8 @@ class Mcp < Thor
           firstname_new: queue_entry[7],
           lastname_new:  queue_entry[8],
           mail:      queue_entry[3],
+          proposed_mail: conv.get_proposed_mailaddress(queue_entry),
+          proposed_action: conv.get_proposed_action(queue_entry, groupwise, idm),
           closed_by: queue_entry[10],
           status: queue_entry[9] == 1 ? close : open,
           type: idm.get_account_type(uid_number: queue_entry[1]),
@@ -239,6 +232,8 @@ class Mcp < Thor
           firstname_new: queue_entry[7],
           lastname_new:  queue_entry[8],
           mail: queue_entry[3],
+          proposed_mail: conv.get_proposed_mailaddress(queue_entry),
+          proposed_action: conv.get_proposed_action(queue_entry, groupwise, idm),
           status: queue_entry[9] == 1 ? close : open,
           type: idm.get_account_type(uid_number: queue_entry[1]),
           state: idm.get_account_state(uid_number: queue_entry[1])
