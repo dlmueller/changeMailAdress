@@ -243,6 +243,27 @@ class Mcp < Thor
 
     tp records
   end
+
+
+  method_option :from,
+          desc: "change id to start with",
+          type: :numeric,
+      required: true
+  method_option :to,
+          desc: "change id where to stop",
+          type: :numeric,
+      required: true
+  desc 'iter --from A --to B','iterate through the open cases between the boundaries'
+  def iter
+    from_id = options[:from]
+    to_id = options[:to]
+    puts "from #{from_id} to #{to_id}"
+    (from_id .. to_id).each do |n|
+      puts "  #{n}"
+    end
+    
+  end
+  
 end
 
 Mcp.start
