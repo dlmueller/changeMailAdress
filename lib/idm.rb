@@ -102,6 +102,17 @@ class Idm
 
 private
   def connect
+    isMissing = false
+    requiredVars = ["IDM_USERNAME", "IDM_PASSWORD", "IDM_SID"]
+    for varName in requiredVars
+      if ENV.has_key?(varName) != true
+        puts "Missing environment variable '#{varName}'!"
+        isMissing = true
+      end
+    end
+    if isMissing
+      exit
+    end
     plsql.connection = OCI8.new \
       ENV['IDM_USERNAME'],
       ENV['IDM_PASSWORD'],
