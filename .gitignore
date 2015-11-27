@@ -1,2 +1,6 @@
 .rbenv-version
 Gemfile.lock
+*~
+*/#*#
+.env
+.ruby-version
