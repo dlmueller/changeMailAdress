@@ -5,6 +5,7 @@
 
 require "net/ldap"
 require "awesome_print"
+require "pry"
 
 class Groupwise
 
@@ -17,6 +18,9 @@ class Groupwise
     basedn = ENV['GWLDAP_BASEDN']
     attributes = ['dn', 'mail']
 
+#    binding.pry
+#    puts "hallo"
+
     mail_attribute = nil
     @ldap.search(base: basedn, filter: filter, attributes: attributes) do |entry|
       mail_attribute = entry.mail[0]
@@ -24,8 +28,8 @@ class Groupwise
     mail_attribute
   end
 
-  def uid_exist? uid: uid
-    filter = Net::LDAP::Filter.eq 'uid', uid
+  def uid_exist? uid: some_uid
+    filter = Net::LDAP::Filter.eq 'uid', some_uid
     basedn = ENV['GWLDAP_BASEDN']
     attributes = ['dn']
 
@@ -37,8 +41,8 @@ class Groupwise
     counter > 0 ? true : false
   end
 
-  def uid_not_exist? uid: uid
-    !uid_exist?(uid: uid)
+  def uid_not_exist? uid: some_uid
+    !uid_exist?(uid: some_uid)
   end
 
 private
