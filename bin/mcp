@@ -92,7 +92,7 @@ class Mcp < Thor
   end
 
   method_option :id,
-                desc: 'id of the case to be shown',
+                desc: 'id of the case to be closed',
                 type: :numeric,
                 required: true
   desc 'close','close the task without changing anything'
@@ -116,6 +116,12 @@ class Mcp < Thor
     queue = idm.get_change_mail_queue
 
     entry = queue.select{ |e| e[0] == options[:id] }.first
+
+    # der betreffende Queue-Eintrag koennte mittlerweile geloescht worden sein
+    if entry.nil? 
+      abort("Queue-Eintrag nicht (mehr?) vorhanden.")
+    end
+ 
     groupwise_mail = groupwise.get_mail(uid: entry[2])
 
     changeid = entry[0]
@@ -244,7 +250,7 @@ class Mcp < Thor
     tp records
   end
 
-
+=begin
   method_option :from,
           desc: "change id to start with",
           type: :numeric,
@@ -253,17 +259,36 @@ class Mcp < Thor
           desc: "change id where to stop",
           type: :numeric,
       required: true
-  desc 'iter --from A --to B','iterate through the open cases between the boundaries'
+  desc 'iter','iterate through the open cases between the boundaries'
   def iter
+
+
+    idm = Idm.new
+    groupwise = Groupwise.new
+    conv = Conventions.new
+
+    queue = idm.get_change_mail_queue
+    open = "open".colorize(:red)
+    close = "close".colorize(:green)
+
+    #if true == options[:open]
+    queue = queue.select{ |r| 0 == r[9] }
+   
+    
     from_id = options[:from]
     to_id = options[:to]
     puts "from #{from_id} to #{to_id}"
     (from_id .. to_id).each do |n|
-      puts "  #{n}"
+
+      entry = queue.select{ |e| e[0] == options[n] }.first
+      #groupwise_mail = groupwise.get_mail(uid: entry[2])
+      
+      puts "  #{n} closed = #{entry[9]}"
     end
     
   end
-  
+=end
+
 end
 
 Mcp.start
