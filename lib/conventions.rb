@@ -36,7 +36,14 @@ class Conventions
     #mailprop_firstname = mailold_firstname
     mailprop_lastname = new_lastname.downcase
     
-    proposed_mail = "#{mailprop_firstname}.#{mailprop_lastname}@#{mailold_domainname}"
+    proposed_mail_raw = "#{mailprop_firstname}.#{mailprop_lastname}@#{mailold_domainname}"
+    proposed_mail = substitute_special_characters proposed_mail_raw
+    return proposed_mail
+  end
+
+
+  def substitute_special_characters proposed_mail_raw
+    proposed_mail = proposed_mail_raw
 
     # Umlaute
     proposed_mail.gsub! 'ä', 'ae'
@@ -92,6 +99,7 @@ class Conventions
     # sonstige diakritische Zeichen
     # ...
     
+    return proposed_mail
 
   end
 
@@ -102,14 +110,14 @@ class Conventions
     #groupwise_mail = entry[3]
     
     state = idm.get_account_state(uid_number: entry[1])
-    
+    ignore_states = ['suspended', 'after_hour']
     proposed_action = "UNKNOWN"
     if groupwise_mail.to_s.strip.length == 0
       proposed_action = 'EXTERNA' 
     elsif proposed_mail == groupwise_mail
-      proposed_action = "CLOSE"
-    elsif state != 'alive'
-      proposed_action = "CLOSE"
+      proposed_action = "CLOSE_NO_CHANGE"
+    elsif ignore_states.include? state
+      proposed_action = "CLOSE_BY_STATE"
     else
       proposed_action = "CHANGE"
     end
