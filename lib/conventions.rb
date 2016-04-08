@@ -66,6 +66,9 @@ class Conventions
     proposed_mail.gsub! "'", '-'
 
     # Umlaute
+    proposed_mail.gsub! 'Ä', 'ae'
+    proposed_mail.gsub! 'Ö', 'oe'
+    proposed_mail.gsub! 'Ü', 'ue'
     proposed_mail.gsub! 'ä', 'ae'
     proposed_mail.gsub! 'ö', 'oe'
     proposed_mail.gsub! 'ü', 'ue'
