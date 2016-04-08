@@ -4,13 +4,25 @@
 #
 
 require "awesome_print"
+require "umt"
 
 class Conventions
 
   def initialize
-    #puts "Conventions.initialize"
+    connect
   end
 
+  def probe_for_next_free_mail(mail)
+    return mail if (plsql.mail_pkg.exist(mail) == 0)
+    parts = mail.split("@")
+    local = parts[0]
+    domain = parts[1]
+    (2..20).each do |nr|
+      other_mail = "#{local}#{nr}@#{domain}"
+      return other_mail if (plsql.mail_pkg.exist(other_mail) == 0)
+    end
+    return nil
+  end
   
   def get_proposed_mailaddress entry
 
@@ -35,15 +47,23 @@ class Conventions
     # oder
     #mailprop_firstname = mailold_firstname
     mailprop_lastname = new_lastname.downcase
-    
+    mailprop_lastname.gsub! '- ', '-'
+    mailprop_lastname.gsub! ' -', '-'
+    mailprop_lastname.gsub! ' ', '-'
+
     proposed_mail_raw = "#{mailprop_firstname}.#{mailprop_lastname}@#{mailold_domainname}"
     proposed_mail = substitute_special_characters proposed_mail_raw
-    return proposed_mail
+    next_mail = proposed_mail
+    #next_mail = probe_for_next_free_mail proposed_mail
+    return next_mail
   end
 
 
   def substitute_special_characters proposed_mail_raw
     proposed_mail = proposed_mail_raw
+
+    # Apostroph
+    proposed_mail.gsub! "'", '-'
 
     # Umlaute
     proposed_mail.gsub! 'ä', 'ae'
@@ -105,7 +125,7 @@ class Conventions
 
 
   def get_proposed_action(entry, groupwise, idm)
-    proposed_mail = get_proposed_mailaddress entry
+    proposed_mail =  get_proposed_mailaddress entry
     groupwise_mail = groupwise.get_mail(uid: entry[2])
     #groupwise_mail = entry[3]
     
@@ -125,5 +145,15 @@ class Conventions
     proposed_action
   end
   
+private
+  def connect
+    username = ENV['IDM_USERNAME']
+    password = ENV['IDM_PASSWORD']
+    sid = ENV['IDM_SID']
+    plsql.connection ||= OCI8.new username, password, sid
+    @db_umt = Sequel.connect("oracle://#{username}:#{password}@#{sid}")
+
+    # @logging = UmtLogging.new
+  end
 
 end
