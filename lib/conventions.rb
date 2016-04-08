@@ -25,7 +25,11 @@ class Conventions
   end
   
   def get_proposed_mailaddress entry
+    candidates = get_proposed_mailaddresses entry
+    return candidates.first
+  end
 
+  def get_proposed_mailaddresses entry
     changeid = entry[0]
     userid = entry[1]
     nkz = entry[2]
@@ -41,21 +45,33 @@ class Conventions
     mailold_firstname = old_mail.split(".").first
     mailold_domainname = old_mail.split("@").last
 
-    # entweder 
-    mailprop_firstname = new_firstname.downcase.split(" ").first
-    
-    # oder
-    #mailprop_firstname = mailold_firstname
-    mailprop_lastname = new_lastname.downcase
-    mailprop_lastname.gsub! '- ', '-'
-    mailprop_lastname.gsub! ' -', '-'
-    mailprop_lastname.gsub! ' ', '-'
+    # Vornamen
+    # - Rufname = erster Vorname
+    # - Vornamen mit Bindestrichen verbunden
+    fn1 = new_firstname.downcase.split(" ").first
+    fn2 = new_firstname.downcase.split(" ").join("-")
+    firstnames = [fn1, fn2].uniq
 
-    proposed_mail_raw = "#{mailprop_firstname}.#{mailprop_lastname}@#{mailold_domainname}"
-    proposed_mail = substitute_special_characters proposed_mail_raw
-    next_mail = proposed_mail
-    #next_mail = probe_for_next_free_mail proposed_mail
-    return next_mail
+    # Nachnamen
+    ln1 = new_lastname.downcase
+    ln1.gsub! '- ', '-'
+    ln1.gsub! ' -', '-'
+    ln1.gsub! ' ', '-'
+    lastnames = [ln1].uniq
+
+    # Kandidatenmenge
+    candidates = []
+
+    # Vornamen x Nachnamen
+    firstnames.product(lastnames).collect do |mailprop_firstname, mailprop_lastname|
+      proposed_mail_raw = "#{mailprop_firstname}.#{mailprop_lastname}@#{mailold_domainname}"
+      proposed_mail = substitute_special_characters proposed_mail_raw
+      next_mail = proposed_mail
+      #next_mail = probe_for_next_free_mail proposed_mail
+      candidates << next_mail
+    end
+
+    return candidates
   end
 
 
@@ -128,7 +144,7 @@ class Conventions
 
 
   def get_proposed_action(entry, groupwise, idm)
-    proposed_mail =  get_proposed_mailaddress entry
+    proposed_mails = get_proposed_mailaddresses entry
     groupwise_mail = groupwise.get_mail(uid: entry[2])
     #groupwise_mail = entry[3]
     
@@ -137,7 +153,7 @@ class Conventions
     proposed_action = "UNKNOWN"
     if groupwise_mail.to_s.strip.length == 0
       proposed_action = 'EXTERNA' 
-    elsif proposed_mail == groupwise_mail
+    elsif proposed_mails.include?(groupwise_mail)
       proposed_action = "CLOSE_NO_CHANGE"
     elsif ignore_states.include? state
       proposed_action = "CLOSE_BY_STATE"
