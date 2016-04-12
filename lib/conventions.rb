@@ -63,10 +63,7 @@ class Conventions
     lastnames = [ln1].uniq
     # Wird aus dem Nachnamen ein Doppelname, muss die Adresse nicht zwingend angepasst werden
     new_lastname_raw = entry[8]
-    puts new_lastname_raw
-    puts new_lastname_raw.downcase
     if new_lastname_raw.include?("-")
-      puts new_lastname_raw, entry[8] #, entry
       lastnames << mailold_lastname if new_lastname.start_with?(mailold_lastname)
       lastnames << mailold_lastname if new_lastname.end_with?(mailold_lastname.downcase)
     end
