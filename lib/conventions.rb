@@ -34,16 +34,19 @@ class Conventions
     userid = entry[1]
     nkz = entry[2]
 
-    old_mail = entry[3]
+    old_mail = entry[3].downcase
     old_firstname = entry[5]
     old_lastname = entry[6]
 
     new_mail = entry[4]
-    new_firstname = entry[7]
-    new_lastname = entry[8]
+    new_firstname = entry[7].downcase
+    new_lastname = entry[8].downcase
 
-    mailold_firstname = old_mail.split(".").first
+    mailold_localpart = old_mail.split("@").first
     mailold_domainname = old_mail.split("@").last
+    mailold_firstname = mailold_localpart.split(".").first
+    mailold_lastname = mailold_localpart.split(".").last
+
 
     # Vornamen
     # - Rufname = erster Vorname
@@ -53,17 +56,20 @@ class Conventions
     firstnames = [fn1, fn2].uniq
 
     # Nachnamen
-    ln1 = new_lastname.downcase
+    ln1 = new_lastname
     ln1.gsub! '- ', '-'
     ln1.gsub! ' -', '-'
     ln1.gsub! ' ', '-'
     lastnames = [ln1].uniq
+    # Wird aus dem Nachnamen ein Doppelname, muss die Adresse nicht zwingend angepasst werden
+    lastnames << mailold_lastname if new_lastname.start_with?(mailold_lastname)
+    lastnames << mailold_lastname if new_lastname.end_with?(mailold_lastname.downcase)
 
     # Kandidatenmenge
     candidates = []
 
     # Vornamen x Nachnamen
-    firstnames.product(lastnames).collect do |mailprop_firstname, mailprop_lastname|
+    firstnames.uniq.product(lastnames.uniq).collect do |mailprop_firstname, mailprop_lastname|
       proposed_mail_raw = "#{mailprop_firstname}.#{mailprop_lastname}@#{mailold_domainname}"
       proposed_mail = substitute_special_characters proposed_mail_raw
       next_mail = proposed_mail
@@ -71,7 +77,7 @@ class Conventions
       candidates << next_mail
     end
 
-    return candidates
+    return candidates.uniq
   end
 
 
