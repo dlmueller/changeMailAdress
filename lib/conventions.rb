@@ -53,7 +53,8 @@ class Conventions
     # - Vornamen mit Bindestrichen verbunden
     fn1 = new_firstname.downcase.split(" ").first
     fn2 = new_firstname.downcase.split(" ").join("-")
-    firstnames = [fn1, fn2].uniq
+    fn3 = new_firstname.downcase.split(" ").last
+    firstnames = [fn1, fn2, fn3].uniq
 
     # Nachnamen
     ln1 = new_lastname
