@@ -6,6 +6,8 @@
 require "awesome_print"
 require "umt"
 
+require "levenshtein"
+
 class Conventions
 
   def initialize
@@ -168,7 +170,9 @@ class Conventions
     elsif ignore_states.include? state
       proposed_action = "CLOSE_BY_STATE"
     else
-      proposed_action = "CHANGE"
+      # eigentllich müsste die Distanz zu allen Vorschlägen berechnet werden
+      ld = Levenshtein.distance(groupwise_mail, proposed_mails[0])
+      proposed_action = "CHANGE (#{ld})"
     end
 
     proposed_action
