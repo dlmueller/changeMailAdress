@@ -215,39 +215,42 @@ class Mcp < Thor
       queue = queue.select{ |r| 0 == r[9] }
     end
 
-    if options[:verbose]
-      records = queue.reduce([]) do |acc, queue_entry|
-        acc << {
-          id: queue_entry[0],
-          uid: queue_entry[2],
-          firstname_old: queue_entry[5],
-          lastname_old:  queue_entry[6],
-          firstname_new: queue_entry[7],
-          lastname_new:  queue_entry[8],
-          mail:      queue_entry[3],
-          proposed_mail: conv.get_proposed_mailaddress(queue_entry),
-          proposed_action: conv.get_proposed_action(queue_entry, groupwise, idm),
-          closed_by: queue_entry[10],
-          status: queue_entry[9] == 1 ? close : open,
-          type: idm.get_account_type(uid_number: queue_entry[1]),
-          state: idm.get_account_state(uid_number: queue_entry[1])
-        }
+    # Um die Nutzer zu Kennzeichnen menschen lesbar zu kennzeichnen, bilden wir
+    # die vorkommenden UMT_USER_ID auf die ersten ganzen natürlichen Zahlen ab.
+    user_numbers = {} # umt_user_id -> user_number
+    entries_per_user = Hash.new(0) # umt_user_id -> count(0)
+    next_number = 100
+    # Stelle Daten zusammen
+    records = queue.reduce([]) do |acc, queue_entry|
+      nkz = queue_entry[2]
+      umt_user_id = plsql.umt_user_pkg.getUmtUserId(plsql.account_pkg.getUmtLoginId(nkz))
+      user_num = user_numbers[umt_user_id]
+      entries_per_user[umt_user_id] += 1
+      unless user_num
+        user_num = next_number
+        user_numbers[umt_user_id] = next_number
+        next_number += 1
       end
-    else
-      records = queue.reduce([]) do |acc, queue_entry|
-        acc << {
-          id: queue_entry[0],
-          uid: queue_entry[2],
-          firstname_new: queue_entry[7],
-          lastname_new:  queue_entry[8],
-          mail: queue_entry[3],
-          proposed_mail: conv.get_proposed_mailaddress(queue_entry),
-          proposed_action: conv.get_proposed_action(queue_entry, groupwise, idm),
-          status: queue_entry[9] == 1 ? close : open,
-          type: idm.get_account_type(uid_number: queue_entry[1]),
-          state: idm.get_account_state(uid_number: queue_entry[1])
-        }
+      record = {
+        id: queue_entry[0],
+        uid: nkz,
+        user: "USR#{user_num}",
+        count: entries_per_user[umt_user_id],
+        firstname_new: queue_entry[7],
+        lastname_new:  queue_entry[8],
+        mail:      queue_entry[3],
+        proposed_mail: conv.get_proposed_mailaddress(queue_entry),
+        proposed_action: conv.get_proposed_action(queue_entry, groupwise, idm),        
+        status: queue_entry[9] == 1 ? close : open,
+        type: idm.get_account_type(uid_number: queue_entry[1]),
+        state: idm.get_account_state(uid_number: queue_entry[1])
+      }
+      if options[:verbose]
+        record[:firstname_old] = queue_entry[5]
+        record[:lastname_old] = queue_entry[6]
+        record[:closed_by] = queue_entry[10]
       end
+      acc << record
     end
 
     tp records
